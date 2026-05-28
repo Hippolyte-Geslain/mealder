@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mealDer",
-    "slug": "mealDer",
+    "name": "MealMatch",
+    "slug": "mealder",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F7F1E3"
     },
     "ios": {
       "supportsTablet": true
@@ -18,13 +18,23 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F7F1E3"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MealMatch a besoin d'accéder à vos photos pour illustrer vos recettes."
+        }
+      ]
+    ]
   }
 }
