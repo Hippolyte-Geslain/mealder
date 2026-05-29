@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Alert, TextInput } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CourseChip } from '../components/CourseChip';
 import { createRecipesBulk } from '../db/recipes';
 import { COURSES, type Course } from '../db/types';
@@ -9,7 +10,7 @@ import { fr } from '../i18n/fr';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { RecipeDraft } from '../ocr/claude';
-import type { ImportReviewProps } from '../navigation/types';
+import type { ImportReviewProps, RootDrawerParamList } from '../navigation/types';
 
 type DraftRow = {
   key: string;
@@ -65,8 +66,11 @@ export function ImportReview({ navigation, route }: ImportReviewProps) {
           })),
         }));
       await createRecipesBulk(inputs);
-      const parent = navigation.getParent();
-      parent?.navigate('LibraryTab' as never);
+      const drawerNav = navigation.getParent<DrawerNavigationProp<RootDrawerParamList>>();
+      drawerNav?.navigate('MainTabs', {
+        screen: 'LibraryTab',
+        params: { screen: 'LibraryList' },
+      });
     } catch (e) {
       Alert.alert(fr.common.error, e instanceof Error ? e.message : String(e));
       setSaving(false);

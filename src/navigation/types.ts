@@ -31,14 +31,25 @@ export type ImportStackParamList = {
   ImportReview: { drafts: RecipeDraft[] };
 };
 
-export type DrawerParamList = {
+export type MainTabParamList = {
   HomeTab: NavigatorScreenParams<HomeStackParamList>;
   LibraryTab: NavigatorScreenParams<LibraryStackParamList>;
   ComposeTab: NavigatorScreenParams<ComposeStackParamList>;
+};
+
+export type RootDrawerParamList = {
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
   MenusTab: NavigatorScreenParams<MenusStackParamList>;
   ImportTab: NavigatorScreenParams<ImportStackParamList>;
   SettingsTab: NavigatorScreenParams<SettingsStackParamList>;
 };
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace ReactNavigation {
+    interface RootParamList extends RootDrawerParamList {}
+  }
+}
 
 export type LibraryListProps = NativeStackScreenProps<LibraryStackParamList, 'LibraryList'>;
 export type RecipeFormProps = NativeStackScreenProps<LibraryStackParamList, 'RecipeForm'>;

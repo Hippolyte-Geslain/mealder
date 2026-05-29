@@ -76,7 +76,7 @@ export function Compose({ navigation }: ComposeStartProps) {
         <Text style={styles.emptyText}>{fr.compose.empty(fr.course[currentCourse])}</Text>
         <Pressable
           style={styles.primaryBtn}
-          onPress={() => navigation.getParent()?.navigate('LibraryTab')}
+          onPress={() => navigation.getParent()?.navigate('LibraryTab' as never)}
         >
           <Text style={styles.primaryBtnText}>{fr.compose.goToLibrary}</Text>
         </Pressable>

@@ -224,8 +224,7 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
           {
             text: fr.ocr.openSettings,
             onPress: () => {
-              const parent = navigation.getParent();
-              parent?.navigate('SettingsTab' as never);
+              navigation.getParent()?.getParent()?.navigate('SettingsTab' as never);
             },
           },
         ]);
@@ -303,6 +302,9 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
     >
         <Pressable
           onPress={onImportPhoto}
+          accessibilityRole="button"
+          accessibilityLabel={fr.ocr.importPhoto}
+          accessibilityState={{ disabled: ocrLoading, busy: ocrLoading }}
           style={[styles.importBtn, ocrLoading && styles.btnDisabled]}
           disabled={ocrLoading}
         >
@@ -328,7 +330,13 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
           )}
         </Pressable>
         {photoUri && (
-          <Pressable onPress={onPickPhoto} style={styles.linkBtn}>
+          <Pressable
+            onPress={onPickPhoto}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={fr.recipeForm.changePhoto}
+            style={styles.linkBtn}
+          >
             <Text style={styles.linkBtnText}>{fr.recipeForm.changePhoto}</Text>
           </Pressable>
         )}
@@ -404,7 +412,13 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
                 style={[styles.input, styles.ingCost]}
               />
               {ingredients.length > 1 && (
-                <Pressable onPress={() => removeIngredient(ing.key)} style={styles.ingRemove}>
+                <Pressable
+                  onPress={() => removeIngredient(ing.key)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={fr.recipeForm.delete}
+                  style={styles.ingRemove}
+                >
                   <Text style={styles.ingRemoveText}>×</Text>
                 </Pressable>
               )}
@@ -414,6 +428,9 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
 
         <Pressable
           onPress={() => setIngredients((prev) => [...prev, emptyIngredient()])}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={fr.recipeForm.addIngredient}
           style={styles.addIngredient}
         >
           <Text style={styles.addIngredientText}>+ {fr.recipeForm.addIngredient}</Text>

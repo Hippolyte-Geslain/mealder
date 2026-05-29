@@ -9,17 +9,15 @@ import {
   Keyboard,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { listMenus } from '../db/menus';
 import { COURSES, type MenuWithCourses } from '../db/types';
 import { fr } from '../i18n/fr';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { formatEUR } from '../utils/money';
-import type { DrawerParamList } from '../navigation/types';
 
 export function Home() {
-  const drawerNav = useNavigation<DrawerNavigationProp<DrawerParamList>>();
+  const navigation = useNavigation();
   const [menus, setMenus] = useState<MenuWithCourses[]>([]);
   const [search, setSearch] = useState('');
 
@@ -37,18 +35,21 @@ export function Home() {
 
   function submitSearch() {
     Keyboard.dismiss();
-    drawerNav.navigate('LibraryTab', {
-      screen: 'LibraryList',
-      params: { search: search.trim() },
+    navigation.navigate('MainTabs', {
+      screen: 'LibraryTab',
+      params: { screen: 'LibraryList', params: { search: search.trim() } },
     });
   }
 
   function goCompose() {
-    drawerNav.navigate('ComposeTab', { screen: 'ComposeStart' });
+    navigation.navigate('MainTabs', {
+      screen: 'ComposeTab',
+      params: { screen: 'ComposeStart' },
+    });
   }
 
   function openMenu(menuId: string) {
-    drawerNav.navigate('MenusTab', { screen: 'MenuDetail', params: { menuId } });
+    navigation.navigate('MenusTab', { screen: 'MenuDetail', params: { menuId } });
   }
 
   const recent = menus.slice(0, 5);

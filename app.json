@@ -34,7 +34,8 @@
         {
           "photosPermission": "MealMatch a besoin d'accéder à vos photos pour illustrer vos recettes."
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }
