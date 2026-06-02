@@ -16,12 +16,16 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.mealder.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F1E3"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -36,6 +40,12 @@
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "61d6e2a7-57b3-4c23-aefd-ebba9c69cd04"
+      }
+    },
+    "owner": "hippogagne"
   }
 }
