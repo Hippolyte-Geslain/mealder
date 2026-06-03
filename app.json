@@ -25,7 +25,10 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,6 +49,9 @@
         "projectId": "61d6e2a7-57b3-4c23-aefd-ebba9c69cd04"
       }
     },
-    "owner": "hippogagne"
+    "owner": "hippogagne",
+    "updates": {
+      "url": "https://u.expo.dev/61d6e2a7-57b3-4c23-aefd-ebba9c69cd04"
+    }
   }
 }
