@@ -16,6 +16,7 @@ type MenuRow = {
 
 type MenuCourseRow = {
   menu_id: string;
+  position: number;
   course: Course;
   recipe_id: string;
 };
@@ -56,10 +57,12 @@ export async function createMenu(input: MenuInput): Promise<string> {
       now,
       now
     );
-    for (const pick of input.picks) {
+    for (let i = 0; i < input.picks.length; i++) {
+      const pick = input.picks[i];
       await db.runAsync(
-        'INSERT INTO menu_course (menu_id, course, recipe_id) VALUES (?, ?, ?)',
+        'INSERT INTO menu_course (menu_id, position, course, recipe_id) VALUES (?, ?, ?, ?)',
         id,
+        i,
         pick.course,
         pick.recipeId
       );
@@ -84,7 +87,7 @@ export async function getMenu(id: string): Promise<MenuWithCourses | null> {
   const row = await db.getFirstAsync<MenuRow>('SELECT * FROM menu WHERE id = ?', id);
   if (!row) return null;
   const courseRows = await db.getAllAsync<MenuCourseRow>(
-    'SELECT * FROM menu_course WHERE menu_id = ?',
+    'SELECT * FROM menu_course WHERE menu_id = ? ORDER BY position ASC',
     id
   );
   const courses: MenuWithCourses['courses'] = [];
@@ -92,8 +95,6 @@ export async function getMenu(id: string): Promise<MenuWithCourses | null> {
     const recipe = await getRecipe(cr.recipe_id);
     if (recipe) courses.push({ course: cr.course, recipe });
   }
-  const order: Record<Course, number> = { entree: 0, plat: 1, dessert: 2 };
-  courses.sort((a, b) => order[a.course] - order[b.course]);
   return {
     ...toMenu(row),
     courses,

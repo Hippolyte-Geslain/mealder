@@ -1,21 +1,20 @@
 import { create } from 'zustand';
 import type { Course } from '../db/types';
 
-export type ComposePicks = {
-  entree: string | null;
-  plat: string | null;
-  dessert: string | null;
-};
+export type ComposePick = { course: Course; recipeId: string };
 
-type ComposeStore = ComposePicks & {
-  setPick: (course: Course, recipeId: string) => void;
+type ComposeStore = {
+  picks: ComposePick[];
+  addPick: (course: Course, recipeId: string) => void;
+  removePickAt: (index: number) => void;
   reset: () => void;
 };
 
 export const useComposeStore = create<ComposeStore>((set) => ({
-  entree: null,
-  plat: null,
-  dessert: null,
-  setPick: (course, recipeId) => set({ [course]: recipeId } as Partial<ComposePicks>),
-  reset: () => set({ entree: null, plat: null, dessert: null }),
+  picks: [],
+  addPick: (course, recipeId) =>
+    set((s) => ({ picks: [...s.picks, { course, recipeId }] })),
+  removePickAt: (index) =>
+    set((s) => ({ picks: s.picks.filter((_, i) => i !== index) })),
+  reset: () => set({ picks: [] }),
 }));

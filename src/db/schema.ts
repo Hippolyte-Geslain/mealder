@@ -59,6 +59,30 @@ const MIGRATIONS: ((db: SQLiteDatabase) => Promise<void>)[] = [
       CREATE INDEX ingredient_library_search ON ingredient_library(owner_id, normalized_name);
     `);
   },
+  async (db) => {
+    // Add description + tags to recipe; allow multiple recipes per course in a menu.
+    // SQLite cannot drop a PK in place, so recreate menu_course with (menu_id, position).
+    await db.execAsync(`
+      ALTER TABLE recipe ADD COLUMN description TEXT;
+      ALTER TABLE recipe ADD COLUMN tags TEXT;
+
+      CREATE TABLE menu_course_new (
+        menu_id TEXT NOT NULL REFERENCES menu(id) ON DELETE CASCADE,
+        position INTEGER NOT NULL,
+        course TEXT NOT NULL CHECK (course IN ('entree','plat','dessert')),
+        recipe_id TEXT NOT NULL REFERENCES recipe(id) ON DELETE RESTRICT,
+        PRIMARY KEY (menu_id, position)
+      );
+      INSERT INTO menu_course_new (menu_id, position, course, recipe_id)
+      SELECT menu_id,
+             CASE course WHEN 'entree' THEN 0 WHEN 'plat' THEN 1 ELSE 2 END,
+             course, recipe_id
+      FROM menu_course;
+      DROP TABLE menu_course;
+      ALTER TABLE menu_course_new RENAME TO menu_course;
+      CREATE INDEX menu_course_menu ON menu_course(menu_id, position);
+    `);
+  },
 ];
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {

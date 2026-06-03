@@ -10,9 +10,25 @@ type RecipeRow = {
   name: string;
   course: Course;
   photo_uri: string | null;
+  description: string | null;
+  tags: string | null;
   created_at: number;
   updated_at: number;
 };
+
+function parseTags(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((t) => t.trim())
+    .filter((t) => t !== '');
+}
+
+function serializeTags(tags: string[] | undefined): string | null {
+  if (!tags || tags.length === 0) return null;
+  const cleaned = tags.map((t) => t.trim()).filter((t) => t !== '');
+  return cleaned.length === 0 ? null : cleaned.join(',');
+}
 
 type IngredientRow = {
   id: string;
@@ -31,6 +47,8 @@ function toRecipe(r: RecipeRow): Recipe {
     name: r.name,
     course: r.course,
     photoUri: r.photo_uri,
+    description: r.description,
+    tags: parseTags(r.tags),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -107,6 +125,8 @@ export type RecipeInput = {
   name: string;
   course: Course;
   photoUri: string | null;
+  description?: string | null;
+  tags?: string[];
   ingredients: IngredientInput[];
 };
 
@@ -117,12 +137,14 @@ export async function createRecipe(input: RecipeInput): Promise<string> {
   const now = Date.now();
   await db.withTransactionAsync(async () => {
     await db.runAsync(
-      'INSERT INTO recipe (id, owner_id, name, course, photo_uri, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO recipe (id, owner_id, name, course, photo_uri, description, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       id,
       ownerId,
       input.name,
       input.course,
       input.photoUri,
+      input.description ?? null,
+      serializeTags(input.tags),
       now,
       now
     );
@@ -150,10 +172,12 @@ export async function updateRecipe(id: string, input: RecipeInput): Promise<void
   const now = Date.now();
   await db.withTransactionAsync(async () => {
     await db.runAsync(
-      'UPDATE recipe SET name = ?, course = ?, photo_uri = ?, updated_at = ? WHERE id = ?',
+      'UPDATE recipe SET name = ?, course = ?, photo_uri = ?, description = ?, tags = ?, updated_at = ? WHERE id = ?',
       input.name,
       input.course,
       input.photoUri,
+      input.description ?? null,
+      serializeTags(input.tags),
       now,
       id
     );
@@ -186,12 +210,14 @@ export async function createRecipesBulk(inputs: RecipeInput[]): Promise<string[]
       const id = uuid();
       ids.push(id);
       await db.runAsync(
-        'INSERT INTO recipe (id, owner_id, name, course, photo_uri, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO recipe (id, owner_id, name, course, photo_uri, description, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
         id,
         ownerId,
         input.name,
         input.course,
         input.photoUri,
+        input.description ?? null,
+        serializeTags(input.tags),
         now,
         now
       );

@@ -4,7 +4,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useComposeStore } from '../state/composeStore';
 import { getRecipe } from '../db/recipes';
 import { createMenu } from '../db/menus';
-import { COURSES, type Course, type RecipeWithIngredients } from '../db/types';
+import { type RecipeWithIngredients } from '../db/types';
 import { fr } from '../i18n/fr';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -17,46 +17,45 @@ function defaultMenuTitle(): string {
 }
 
 export function MenuSummary({ navigation }: MenuSummaryProps) {
-  const entree = useComposeStore((s) => s.entree);
-  const plat = useComposeStore((s) => s.plat);
-  const dessert = useComposeStore((s) => s.dessert);
+  const picks = useComposeStore((s) => s.picks);
   const reset = useComposeStore((s) => s.reset);
 
-  const [recipes, setRecipes] = useState<Record<Course, RecipeWithIngredients | null>>({
-    entree: null,
-    plat: null,
-    dessert: null,
-  });
+  const [recipes, setRecipes] = useState<Record<string, RecipeWithIngredients | null>>({});
   const [title, setTitle] = useState(defaultMenuTitle);
   const [couverts, setCouverts] = useState(1);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    const ids: Record<Course, string | null> = { entree, plat, dessert };
-    Promise.all(COURSES.map((c) => (ids[c] ? getRecipe(ids[c]!) : Promise.resolve(null)))).then(
-      ([e, p, d]) => {
-        if (!alive) return;
-        setRecipes({ entree: e, plat: p, dessert: d });
-      }
-    );
+    const ids = Array.from(new Set(picks.map((p) => p.recipeId)));
+    Promise.all(ids.map((id) => getRecipe(id))).then((rs) => {
+      if (!alive) return;
+      const next: Record<string, RecipeWithIngredients | null> = {};
+      ids.forEach((id, i) => {
+        next[id] = rs[i];
+      });
+      setRecipes(next);
+    });
     return () => {
       alive = false;
     };
-  }, [entree, plat, dessert]);
+  }, [picks]);
 
-  const perPortion = COURSES.reduce((s, c) => s + (recipes[c]?.totalCostPerPortion ?? 0), 0);
+  const perPortion = picks.reduce(
+    (s, p) => s + (recipes[p.recipeId]?.totalCostPerPortion ?? 0),
+    0
+  );
   const grandTotal = perPortion * couverts;
-  const allPicked = COURSES.every((c) => recipes[c] != null);
+  const canSave = title.trim() !== '' && picks.length > 0 && !saving;
 
   async function onSave() {
-    if (!title.trim() || saving || !allPicked) return;
+    if (!canSave) return;
     setSaving(true);
     try {
       const menuId = await createMenu({
         title: title.trim(),
         couverts,
-        picks: COURSES.map((c) => ({ course: c, recipeId: recipes[c]!.id })),
+        picks: picks.map((p) => ({ course: p.course, recipeId: p.recipeId })),
       });
       reset();
       navigation.replace('MenuDetail', { menuId });
@@ -73,78 +72,78 @@ export function MenuSummary({ navigation }: MenuSummaryProps) {
       keyboardShouldPersistTaps="handled"
       bottomOffset={16}
     >
-        <Text style={styles.label}>{fr.menuSummary.menuTitle}</Text>
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          style={styles.titleInput}
-          placeholder={fr.menuSummary.menuTitle}
-          placeholderTextColor={colors.textMuted}
-        />
+      <Text style={styles.label}>{fr.menuSummary.menuTitle}</Text>
+      <TextInput
+        value={title}
+        onChangeText={setTitle}
+        style={styles.titleInput}
+        placeholder={fr.menuSummary.menuTitle}
+        placeholderTextColor={colors.textMuted}
+      />
 
-        {COURSES.map((c) => {
-          const r = recipes[c];
-          return (
-            <View key={c} style={styles.courseCard}>
-              <Text style={styles.courseLabel}>{fr.course[c]}</Text>
-              {r ? (
-                <View style={styles.recipeRow}>
-                  {r.photoUri ? (
-                    <Image source={{ uri: r.photoUri }} style={styles.photo} />
-                  ) : (
-                    <View style={[styles.photo, styles.photoPlaceholder]}>
-                      <Text style={styles.photoPlaceholderText}>{fr.course[c].charAt(0)}</Text>
-                    </View>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.recipeName}>{r.name}</Text>
-                    <Text style={styles.recipeCost}>{formatEUR(r.totalCostPerPortion)}</Text>
+      {picks.map((p, idx) => {
+        const r = recipes[p.recipeId];
+        return (
+          <View key={`${p.recipeId}-${idx}`} style={styles.courseCard}>
+            <Text style={styles.courseLabel}>{fr.course[p.course]}</Text>
+            {r ? (
+              <View style={styles.recipeRow}>
+                {r.photoUri ? (
+                  <Image source={{ uri: r.photoUri }} style={styles.photo} />
+                ) : (
+                  <View style={[styles.photo, styles.photoPlaceholder]}>
+                    <Text style={styles.photoPlaceholderText}>{fr.course[p.course].charAt(0)}</Text>
                   </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.recipeName}>{r.name}</Text>
+                  <Text style={styles.recipeCost}>{formatEUR(r.totalCostPerPortion)}</Text>
                 </View>
-              ) : (
-                <Text style={styles.missing}>—</Text>
-              )}
-            </View>
-          );
-        })}
-
-        <View style={styles.couvertsRow}>
-          <Text style={styles.couvertsLabel}>{fr.menuSummary.couverts}</Text>
-          <View style={styles.stepper}>
-            <Pressable
-              onPress={() => setCouverts((c) => Math.max(1, c - 1))}
-              style={styles.stepBtn}
-              hitSlop={8}
-            >
-              <Text style={styles.stepBtnText}>−</Text>
-            </Pressable>
-            <Text style={styles.stepValue}>{couverts}</Text>
-            <Pressable
-              onPress={() => setCouverts((c) => c + 1)}
-              style={styles.stepBtn}
-              hitSlop={8}
-            >
-              <Text style={styles.stepBtnText}>+</Text>
-            </Pressable>
+              </View>
+            ) : (
+              <Text style={styles.missing}>—</Text>
+            )}
           </View>
-        </View>
+        );
+      })}
 
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>{fr.menuSummary.total}</Text>
-          <Text style={styles.totalValueMuted}>{formatEUR(perPortion)}</Text>
+      <View style={styles.couvertsRow}>
+        <Text style={styles.couvertsLabel}>{fr.menuSummary.couverts}</Text>
+        <View style={styles.stepper}>
+          <Pressable
+            onPress={() => setCouverts((c) => Math.max(1, c - 1))}
+            style={styles.stepBtn}
+            hitSlop={8}
+          >
+            <Text style={styles.stepBtnText}>−</Text>
+          </Pressable>
+          <Text style={styles.stepValue}>{couverts}</Text>
+          <Pressable
+            onPress={() => setCouverts((c) => c + 1)}
+            style={styles.stepBtn}
+            hitSlop={8}
+          >
+            <Text style={styles.stepBtnText}>+</Text>
+          </Pressable>
         </View>
-        <View style={styles.totalRowGrand}>
-          <Text style={styles.totalLabel}>{fr.menuSummary.grandTotal(couverts)}</Text>
-          <Text style={styles.totalValue}>{formatEUR(grandTotal)}</Text>
-        </View>
+      </View>
 
-        <Pressable
-          style={[styles.saveBtn, (!title.trim() || saving || !allPicked) && styles.saveBtnDisabled]}
-          onPress={onSave}
-          disabled={!title.trim() || saving || !allPicked}
-        >
-          <Text style={styles.saveBtnText}>{fr.menuSummary.save}</Text>
-        </Pressable>
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>{fr.menuSummary.total}</Text>
+        <Text style={styles.totalValueMuted}>{formatEUR(perPortion)}</Text>
+      </View>
+      <View style={styles.totalRowGrand}>
+        <Text style={styles.totalLabel}>{fr.menuSummary.grandTotal(couverts)}</Text>
+        <Text style={styles.totalValue}>{formatEUR(grandTotal)}</Text>
+      </View>
+
+      <Pressable
+        style={[styles.saveBtn, !canSave && styles.saveBtnDisabled]}
+        onPress={onSave}
+        disabled={!canSave}
+      >
+        <Text style={styles.saveBtnText}>{fr.menuSummary.save}</Text>
+      </Pressable>
     </KeyboardAwareScrollView>
   );
 }

@@ -8,6 +8,8 @@ export type Recipe = {
   name: string;
   course: Course;
   photoUri: string | null;
+  description: string | null;
+  tags: string[];
   createdAt: number;
   updatedAt: number;
 };

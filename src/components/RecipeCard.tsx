@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { fr } from '../i18n/fr';
@@ -17,11 +17,31 @@ export function RecipeCard({ recipe }: { recipe: RecipeWithIngredients }) {
           </View>
         )}
       </View>
-      <View style={styles.body}>
+      <ScrollView
+        style={styles.bodyScroll}
+        contentContainerStyle={styles.body}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator
+      >
         <Text style={styles.name} numberOfLines={2}>
           {recipe.name}
         </Text>
         <Text style={styles.course}>{fr.course[recipe.course]}</Text>
+
+        {recipe.tags.length > 0 && (
+          <View style={styles.tagRow}>
+            {recipe.tags.map((t) => (
+              <View key={t} style={styles.tagChip}>
+                <Text style={styles.tagText}>{t}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {recipe.description && (
+          <Text style={styles.description}>{recipe.description}</Text>
+        )}
+
         <View style={styles.ingredients}>
           {recipe.ingredients.map((ing) => (
             <View key={ing.id} style={styles.ingRow}>
@@ -35,11 +55,12 @@ export function RecipeCard({ recipe }: { recipe: RecipeWithIngredients }) {
             </View>
           ))}
         </View>
+
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>{fr.recipeForm.total}</Text>
           <Text style={styles.totalValue}>{formatEUR(recipe.totalCostPerPortion)}</Text>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -58,19 +79,31 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 3,
   },
-  photoWrap: { width: '100%', height: '45%', backgroundColor: colors.surfaceAlt },
+  photoWrap: { width: '100%', height: 220, backgroundColor: colors.surfaceAlt },
   photo: { width: '100%', height: '100%' },
   photoPlaceholder: { alignItems: 'center', justifyContent: 'center' },
   photoPlaceholderText: { fontSize: 56, color: colors.primary, fontWeight: '700' },
-  body: { flex: 1, padding: 18, gap: 6 },
+  bodyScroll: { flex: 1 },
+  body: { padding: 18, gap: 6, paddingBottom: 140 },
   name: { ...typography.title, color: colors.text },
   course: { ...typography.caption, color: colors.primary, fontWeight: '600' },
-  ingredients: { marginTop: 8, gap: 4 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  tagChip: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tagText: { ...typography.caption, color: colors.text },
+  description: { ...typography.body, color: colors.textMuted, marginTop: 6 },
+  ingredients: { marginTop: 12, gap: 4 },
   ingRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   ingName: { ...typography.body, color: colors.text, flex: 1 },
   ingCost: { ...typography.body, color: colors.textMuted },
   totalRow: {
-    marginTop: 'auto',
+    marginTop: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: 10,
