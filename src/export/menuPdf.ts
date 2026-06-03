@@ -2,7 +2,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { fr } from '../i18n/fr';
 import { formatEUR } from '../utils/money';
-import { COURSES, type MenuWithCourses } from '../db/types';
+import { type MenuWithCourses } from '../db/types';
 
 function escapeHtml(s: string): string {
   return s
@@ -14,24 +14,24 @@ function escapeHtml(s: string): string {
 }
 
 function buildHtml(menu: MenuWithCourses): string {
-  const byCourse = Object.fromEntries(menu.courses.map((c) => [c.course, c.recipe]));
   const dateStr = new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
   }).format(new Date(menu.createdAt));
 
-  const courseSections = COURSES.map((c) => {
-    const r = byCourse[c];
-    const courseLabel = escapeHtml(fr.course[c]);
-    const dishName = r ? escapeHtml(r.name) : '&mdash;';
-    return `
+  const courseSections = menu.courses
+    .map((entry) => {
+      const courseLabel = escapeHtml(fr.course[entry.course]);
+      const dishName = escapeHtml(entry.recipe.name);
+      return `
       <section class="course">
         <div class="course-label">${courseLabel}</div>
         <div class="dish-name">${dishName}</div>
       </section>
     `;
-  }).join('\n');
+    })
+    .join('\n');
 
   return `<!doctype html>
 <html lang="fr">

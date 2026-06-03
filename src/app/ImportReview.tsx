@@ -17,6 +17,8 @@ type DraftRow = {
   selected: boolean;
   name: string;
   course: Course;
+  description: string | null;
+  tags: string[];
   ingredients: RecipeDraft['ingredients'];
 };
 
@@ -26,6 +28,8 @@ function fromDrafts(drafts: RecipeDraft[]): DraftRow[] {
     selected: true,
     name: d.name,
     course: d.course,
+    description: d.description,
+    tags: d.tags,
     ingredients: d.ingredients,
   }));
 }
@@ -58,6 +62,8 @@ export function ImportReview({ navigation, route }: ImportReviewProps) {
           name: r.name.trim(),
           course: r.course,
           photoUri: null,
+          description: r.description,
+          tags: r.tags,
           ingredients: r.ingredients.map((i) => ({
             name: i.name,
             quantity: i.quantity,

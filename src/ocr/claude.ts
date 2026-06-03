@@ -11,6 +11,8 @@ const MAX_DIM = 1568;
 export type RecipeDraft = {
   name: string;
   course: Course;
+  description: string | null;
+  tags: string[];
   ingredients: { name: string; quantity: number | null; unit: string | null }[];
 };
 
@@ -42,6 +44,8 @@ Règles strictes :
 - "ingredients" : une entrée par ligne d'ingrédient visible. N'invente JAMAIS d'ingrédient non présent sur la photo.
 - "quantity" : nombre décimal. Omets le champ si absent ou non chiffrable.
 - "unit" : unité courte en français ("g", "kg", "L", "cl", "ml", "c. à s.", "c. à c.", "pièce", "pincée", "gousse"…). Omets si absente.
+- "description" : courte note ou méthode visible sur la photo (1-3 phrases). Omets si absente.
+- "tags" : mots-clés courts en français présents ou évidents ("végétarien", "été", "froid", "sans gluten"…). Omets si aucun.
 - Aucun coût, aucun prix : ces champs seront remplis manuellement par le chef.
 - Si la photo n'est PAS une recette, appelle record_recipe avec name="" et ingredients=[].`;
 
@@ -56,6 +60,15 @@ const RECIPE_TOOL = {
         type: 'string',
         enum: ['entree', 'plat', 'dessert'],
         description: 'Type de plat. En cas de doute, "plat".',
+      },
+      description: {
+        type: 'string',
+        description: 'Courte description ou méthode visible sur la photo. Omets si absente.',
+      },
+      tags: {
+        type: 'array',
+        description: 'Mots-clés courts en français. Omets ou laisse vide si aucun.',
+        items: { type: 'string' },
       },
       ingredients: {
         type: 'array',
@@ -91,6 +104,12 @@ function normalizeDraft(input: unknown): RecipeDraft {
       ? (rawCourse as Course)
       : 'plat';
   const name = typeof obj.name === 'string' ? obj.name.trim() : '';
+  const rawDescription = typeof obj.description === 'string' ? obj.description.trim() : '';
+  const description = rawDescription === '' ? null : rawDescription;
+  const rawTags = Array.isArray(obj.tags) ? obj.tags : [];
+  const tags = rawTags
+    .map((t) => (typeof t === 'string' ? t.trim() : ''))
+    .filter((t) => t !== '');
   const rawIngredients = Array.isArray(obj.ingredients) ? obj.ingredients : [];
   const ingredients = rawIngredients
     .map((raw): RecipeDraft['ingredients'][number] => {
@@ -102,7 +121,7 @@ function normalizeDraft(input: unknown): RecipeDraft {
       return { name: ingName, quantity, unit };
     })
     .filter((i) => i.name !== '');
-  return { name, course, ingredients };
+  return { name, course, description, tags, ingredients };
 }
 
 async function prepareImageForOcr(photoUri: string): Promise<string> {

@@ -19,6 +19,8 @@ Règles strictes :
 - "ingredients" : une entrée par ligne d'ingrédient visible. N'invente JAMAIS d'ingrédient non présent.
 - "quantity" : nombre décimal. Omets le champ si absent.
 - "unit" : unité courte en français. Omets si absente.
+- "description" : courte note ou méthode visible (1-3 phrases). Omets si absente.
+- "tags" : mots-clés courts en français présents ou évidents. Omets ou vide si aucun.
 - Aucun coût, aucun prix : ces champs seront remplis manuellement.
 - Si le PDF ne contient aucune recette, retourne {"recipes": []}.`;
 
@@ -39,6 +41,8 @@ const RECIPES_TOOL = {
               type: 'string',
               enum: ['entree', 'plat', 'dessert'],
             },
+            description: { type: 'string' },
+            tags: { type: 'array', items: { type: 'string' } },
             ingredients: {
               type: 'array',
               items: {
@@ -80,6 +84,12 @@ function normalizeDrafts(input: unknown): RecipeDraft[] {
         typeof rawCourse === 'string' && (validCourses as string[]).includes(rawCourse)
           ? (rawCourse as Course)
           : 'plat';
+      const rawDescription = typeof r.description === 'string' ? r.description.trim() : '';
+      const description = rawDescription === '' ? null : rawDescription;
+      const rawTags = Array.isArray(r.tags) ? r.tags : [];
+      const tags = rawTags
+        .map((t) => (typeof t === 'string' ? t.trim() : ''))
+        .filter((t) => t !== '');
       const rawIng = Array.isArray(r.ingredients) ? r.ingredients : [];
       const ingredients = rawIng
         .map((rawI) => {
@@ -91,7 +101,7 @@ function normalizeDrafts(input: unknown): RecipeDraft[] {
           return { name: ingName, quantity, unit };
         })
         .filter((i) => i.name !== '');
-      return { name, course, ingredients };
+      return { name, course, description, tags, ingredients };
     })
     .filter((d) => d.name !== '' || d.ingredients.length > 0);
 }

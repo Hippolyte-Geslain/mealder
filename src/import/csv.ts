@@ -90,7 +90,7 @@ export function parseRecipesCsv(text: string): RecipeDraft[] {
     const key = `${recipeName}|${course}`;
     let draft = grouped.get(key);
     if (!draft) {
-      draft = { name: recipeName, course, ingredients: [] };
+      draft = { name: recipeName, course, description: null, tags: [], ingredients: [] };
       grouped.set(key, draft);
       order.push(key);
     }

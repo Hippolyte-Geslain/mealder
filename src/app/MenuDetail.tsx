@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { deleteMenu, getMenu, updateMenuCouverts } from '../db/menus';
-import { COURSES, type MenuWithCourses } from '../db/types';
+import { type MenuWithCourses } from '../db/types';
 import { fr } from '../i18n/fr';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -86,35 +86,30 @@ export function MenuDetail({ route, navigation }: Props) {
     return <View style={styles.container} />;
   }
 
-  const recipesByCourse = Object.fromEntries(menu.courses.map((c) => [c.course, c.recipe]));
   const grandTotal = menu.totalCostPerPortion * menu.couverts;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>{menu.title}</Text>
 
-      {COURSES.map((c) => {
-        const r = recipesByCourse[c];
+      {menu.courses.map((entry, idx) => {
+        const r = entry.recipe;
         return (
-          <View key={c} style={styles.courseCard}>
-            <Text style={styles.courseLabel}>{fr.course[c]}</Text>
-            {r ? (
-              <View style={styles.recipeRow}>
-                {r.photoUri ? (
-                  <Image source={{ uri: r.photoUri }} style={styles.photo} />
-                ) : (
-                  <View style={[styles.photo, styles.photoPlaceholder]}>
-                    <Text style={styles.photoPlaceholderText}>{fr.course[c].charAt(0)}</Text>
-                  </View>
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.recipeName}>{r.name}</Text>
-                  <Text style={styles.recipeCost}>{formatEUR(r.totalCostPerPortion)}</Text>
+          <View key={`${entry.course}-${idx}`} style={styles.courseCard}>
+            <Text style={styles.courseLabel}>{fr.course[entry.course]}</Text>
+            <View style={styles.recipeRow}>
+              {r.photoUri ? (
+                <Image source={{ uri: r.photoUri }} style={styles.photo} />
+              ) : (
+                <View style={[styles.photo, styles.photoPlaceholder]}>
+                  <Text style={styles.photoPlaceholderText}>{fr.course[entry.course].charAt(0)}</Text>
                 </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.recipeName}>{r.name}</Text>
+                <Text style={styles.recipeCost}>{formatEUR(r.totalCostPerPortion)}</Text>
               </View>
-            ) : (
-              <Text style={styles.missing}>—</Text>
-            )}
+            </View>
           </View>
         );
       })}

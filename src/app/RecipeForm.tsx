@@ -93,6 +93,8 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
   const [name, setName] = useState('');
   const [course, setCourse] = useState<Course>('entree');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([emptyIngredient()]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -173,6 +175,8 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
       setName(r.name);
       setCourse(r.course);
       setPhotoUri(r.photoUri);
+      setDescription(r.description ?? '');
+      setTagsInput(r.tags.join(', '));
       setIngredients(
         r.ingredients.length > 0
           ? r.ingredients.map((i) => ({
@@ -216,6 +220,8 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
       const draft = await runRecipeOcr(uri);
       setName(draft.name);
       setCourse(draft.course);
+      setDescription(draft.description ?? '');
+      setTagsInput((draft.tags ?? []).join(', '));
       setIngredients(draftToIngredients(draft.ingredients));
     } catch (e) {
       if (e instanceof OcrError && e.kind === 'NO_API_KEY') {
@@ -248,9 +254,21 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
         unit: i.unit.trim() || null,
         costPerPortion: parseCost(i.costPerPortion),
       }));
+    const tagsList = tagsInput
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t !== '');
+    const descTrim = description.trim();
     setSaving(true);
     try {
-      const input = { name: name.trim(), course, photoUri, ingredients: cleaned };
+      const input = {
+        name: name.trim(),
+        course,
+        photoUri,
+        description: descTrim === '' ? null : descTrim,
+        tags: tagsList,
+        ingredients: cleaned,
+      };
       if (recipeId) {
         await updateRecipe(recipeId, input);
       } else {
@@ -352,6 +370,40 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
             />
           ))}
         </View>
+
+        <Text style={styles.label}>{fr.recipeForm.description}</Text>
+        <TextInput
+          value={description}
+          onChangeText={setDescription}
+          style={[styles.input, styles.descriptionInput]}
+          placeholder={fr.recipeForm.description}
+          placeholderTextColor={colors.textMuted}
+          multiline
+          textAlignVertical="top"
+        />
+
+        <Text style={styles.label}>{fr.recipeForm.tags}</Text>
+        <TextInput
+          value={tagsInput}
+          onChangeText={setTagsInput}
+          style={styles.input}
+          placeholder={fr.recipeForm.tags}
+          placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+        />
+        {tagsInput.trim() !== '' && (
+          <View style={styles.tagChipsRow}>
+            {tagsInput
+              .split(',')
+              .map((t) => t.trim())
+              .filter((t) => t !== '')
+              .map((t, i) => (
+                <View key={`${t}-${i}`} style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>{t}</Text>
+                </View>
+              ))}
+          </View>
+        )}
 
         <View style={styles.ingredientHeader}>
           <Text style={styles.label}>{fr.recipeForm.ingredients}</Text>
@@ -496,6 +548,17 @@ const styles = StyleSheet.create({
   linkBtn: { alignSelf: 'flex-start', paddingVertical: 6 },
   linkBtnText: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   courseRow: { flexDirection: 'row', gap: 8 },
+  descriptionInput: { minHeight: 96, paddingTop: 10 },
+  tagChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  tagChip: {
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tagChipText: { ...typography.caption, color: colors.text },
   ingredientHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
