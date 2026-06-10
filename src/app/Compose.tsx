@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-nati
 import Swiper from 'react-native-deck-swiper';
 import { useFocusEffect } from '@react-navigation/native';
 import { RecipeCard } from '../components/RecipeCard';
+import { MenuFlavorMix } from '../components/MenuFlavorMix';
 import { listRecipes } from '../db/recipes';
 import { useComposeStore } from '../state/composeStore';
 import { fr } from '../i18n/fr';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { Course, RecipeWithIngredients } from '../db/types';
+import type { FlavorProfile } from '../flavor/types';
 import type { ComposeStartProps } from '../navigation/types';
 
 const STEPS: Course[] = ['entree', 'plat', 'dessert'];
@@ -22,6 +24,9 @@ export function Compose({ navigation }: ComposeStartProps) {
   const [step, setStep] = useState(0);
   const [recipes, setRecipes] = useState<RecipeWithIngredients[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pickedFlavors, setPickedFlavors] = useState<
+    Partial<Record<Course, FlavorProfile | null>>
+  >({});
   const setPick = useComposeStore((s) => s.setPick);
   const reset = useComposeStore((s) => s.reset);
   const swiperRef = useRef<Swiper<RecipeWithIngredients> | null>(null);
@@ -32,6 +37,7 @@ export function Compose({ navigation }: ComposeStartProps) {
     useCallback(() => {
       reset();
       setStep(0);
+      setPickedFlavors({});
     }, [reset])
   );
 
@@ -55,6 +61,7 @@ export function Compose({ navigation }: ComposeStartProps) {
     const recipe = recipes[cardIndex];
     if (!recipe) return;
     setPick(currentCourse, recipe.id);
+    setPickedFlavors((prev) => ({ ...prev, [currentCourse]: recipe.flavor }));
     if (step === STEPS.length - 1) {
       navigation.navigate('MenuSummary');
     } else {
@@ -89,6 +96,9 @@ export function Compose({ navigation }: ComposeStartProps) {
       <View style={styles.header}>
         <Text style={styles.stepText}>{fr.compose.step(step + 1, STEPS.length)}</Text>
         <Text style={styles.prompt}>{PROMPTS[currentCourse]}</Text>
+      </View>
+      <View style={styles.flavorStrip}>
+        <MenuFlavorMix profiles={pickedFlavors} compact />
       </View>
       <View style={styles.deck}>
         <Swiper
@@ -147,6 +157,7 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 6, gap: 4 },
   stepText: { ...typography.caption, color: colors.textMuted, fontWeight: '600' },
   prompt: { ...typography.title, color: colors.text },
+  flavorStrip: { paddingHorizontal: 16 },
   deck: { flex: 1 },
   actions: {
     flexDirection: 'row',

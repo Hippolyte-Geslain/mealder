@@ -4,6 +4,10 @@ French-language Expo / React Native app to manage recipes and compose multi-cour
 menus. See `README.md` for the user-facing feature list and getting-started steps.
 This file captures decisions and findings that are **not** obvious from the code.
 
+> **Implementation status and roadmap live in `projectlaunch.md`** — read it before
+> starting any feature work, follow its decision-gate protocol (§2) for gated 🔒 items,
+> and update it (checkboxes, decisions, update log) whenever a phase moves forward.
+
 ## Architecture facts that matter
 
 - **Local-first, no backend.** All data lives on-device in `expo-sqlite`
@@ -37,11 +41,16 @@ Cost reference for other paths (not chosen):
 | Google Play | $25 | $0 |
 | Apple App Store / TestFlight (iOS) | — | $99/yr |
 
-## Active initiative: web compatibility (discovery only — NO code changed yet)
+## Web compatibility — IMPLEMENTED 2026-06-09 (decision D11, `projectlaunch.md`)
 
-Investigating what must change for `expo start --web` / a static web build to work.
-The app currently has **zero** `Platform.OS` branching; everything assumes native.
-Findings, by severity:
+The findings below have all been addressed: web deps installed, secure-store wrapped
+by `src/utils/secureKV.ts` (localStorage on web), file reads platform-branched
+(ImageManipulator `base64: true` for OCR images; fetch/FileReader for PDF/CSV),
+the `anthropic-dangerous-direct-browser-access` header added to every Anthropic call,
+menu PDF falls back to the browser print dialog, and `metro.config.js` serves wasm +
+COOP/COEP headers for SQLite (a production static host must send the same headers).
+`expo export --platform web` passes; a real-browser runtime check is still pending.
+Original discovery (kept for reference):
 
 **Prerequisite (web isn't even installed):**
 - Missing deps: `react-dom`, `react-native-web`, `@expo/metro-runtime`

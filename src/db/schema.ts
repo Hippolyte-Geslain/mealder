@@ -59,6 +59,27 @@ const MIGRATIONS: ((db: SQLiteDatabase) => Promise<void>)[] = [
       CREATE INDEX ingredient_library_search ON ingredient_library(owner_id, normalized_name);
     `);
   },
+  async (db) => {
+    await db.execAsync(`
+      ALTER TABLE recipe ADD COLUMN flavor_json TEXT;
+      ALTER TABLE recipe ADD COLUMN flavor_input TEXT;
+    `);
+  },
+  async (db) => {
+    await db.execAsync(`
+      CREATE TABLE ingredient_cost_history (
+        id TEXT PRIMARY KEY,
+        owner_id TEXT NOT NULL,
+        normalized_name TEXT NOT NULL,
+        name TEXT NOT NULL,
+        cost_per_portion REAL NOT NULL,
+        unit TEXT,
+        recorded_at INTEGER NOT NULL
+      );
+      CREATE INDEX cost_history_lookup
+        ON ingredient_cost_history(owner_id, normalized_name, recorded_at DESC);
+    `);
+  },
 ];
 
 export async function runMigrations(db: SQLiteDatabase): Promise<void> {

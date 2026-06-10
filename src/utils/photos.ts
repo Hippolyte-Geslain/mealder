@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { uuid } from './uuid';
@@ -21,6 +22,9 @@ export async function pickAndStoreRecipePhoto(): Promise<string | null> {
   });
   if (result.canceled || result.assets.length === 0) return null;
   const src = result.assets[0].uri;
+  // Web : pas de système de fichiers ; l'URI retournée (data URI) est déjà
+  // persistante et se stocke telle quelle en base.
+  if (Platform.OS === 'web') return src;
   await ensureDir();
   const ext = src.split('.').pop()?.split('?')[0]?.toLowerCase() ?? 'jpg';
   const dest = `${PHOTOS_DIR}${uuid()}.${ext}`;

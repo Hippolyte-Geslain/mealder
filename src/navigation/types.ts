@@ -24,6 +24,7 @@ export type HomeStackParamList = {
 
 export type SettingsStackParamList = {
   SettingsMain: undefined;
+  CostHistory: undefined;
 };
 
 export type ImportStackParamList = {
@@ -59,5 +60,7 @@ export type ComposeMenuDetailProps = NativeStackScreenProps<ComposeStackParamLis
 export type SavedMenusListProps = NativeStackScreenProps<MenusStackParamList, 'SavedMenusList'>;
 export type MenuDetailProps = NativeStackScreenProps<MenusStackParamList, 'MenuDetail'>;
 export type HomeMainProps = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
+export type SettingsMainProps = NativeStackScreenProps<SettingsStackParamList, 'SettingsMain'>;
+export type CostHistoryProps = NativeStackScreenProps<SettingsStackParamList, 'CostHistory'>;
 export type ImportPickerProps = NativeStackScreenProps<ImportStackParamList, 'ImportPicker'>;
 export type ImportReviewProps = NativeStackScreenProps<ImportStackParamList, 'ImportReview'>;

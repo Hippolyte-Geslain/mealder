@@ -4,6 +4,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { CourseChip } from '../components/CourseChip';
 import { createRecipesBulk } from '../db/recipes';
+import { refreshRecipesFlavorInBackground } from '../flavor/service';
 import { COURSES, type Course } from '../db/types';
 import { uuid } from '../utils/uuid';
 import { fr } from '../i18n/fr';
@@ -65,7 +66,8 @@ export function ImportReview({ navigation, route }: ImportReviewProps) {
             costPerPortion: 0,
           })),
         }));
-      await createRecipesBulk(inputs);
+      const ids = await createRecipesBulk(inputs);
+      refreshRecipesFlavorInBackground(ids);
       const drawerNav = navigation.getParent<DrawerNavigationProp<RootDrawerParamList>>();
       drawerNav?.navigate('MainTabs', {
         screen: 'LibraryTab',

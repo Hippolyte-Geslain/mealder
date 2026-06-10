@@ -1,3 +1,5 @@
+import type { FlavorProfile } from '../flavor/types';
+
 export type Course = 'entree' | 'plat' | 'dessert';
 
 export const COURSES: Course[] = ['entree', 'plat', 'dessert'];
@@ -8,6 +10,9 @@ export type Recipe = {
   name: string;
   course: Course;
   photoUri: string | null;
+  flavor: FlavorProfile | null;
+  /** Clé des entrées (nom + ingrédients) ayant servi au calcul de `flavor`. */
+  flavorInput: string | null;
   createdAt: number;
   updatedAt: number;
 };

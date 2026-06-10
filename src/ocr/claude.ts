@@ -1,4 +1,3 @@
-import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { getApiKey } from '../utils/apiKey';
 import type { Course } from '../db/types';
@@ -105,6 +104,8 @@ function normalizeDraft(input: unknown): RecipeDraft {
   return { name, course, ingredients };
 }
 
+// Retourne directement le base64 (option d'ImageManipulator) : fonctionne sur
+// natif comme sur web, là où expo-file-system n'a pas de support web.
 async function prepareImageForOcr(photoUri: string): Promise<string> {
   const info = await ImageManipulator.manipulateAsync(photoUri, [], {});
   const longerEdge = Math.max(info.width, info.height);
@@ -119,11 +120,14 @@ async function prepareImageForOcr(photoUri: string): Promise<string> {
   const result = await ImageManipulator.manipulateAsync(photoUri, actions, {
     compress: 0.85,
     format: ImageManipulator.SaveFormat.JPEG,
+    base64: true,
   });
   console.log(
     `[OCR] image: source ${info.width}x${info.height} → out ${result.width}x${result.height}`
   );
-  return result.uri;
+  if (!result.base64) throw new OcrError('UNKNOWN', 'no base64 from manipulator');
+  // Sur web le base64 peut arriver préfixé en data URI.
+  return result.base64.replace(/^data:.*?;base64,/, '');
 }
 
 export async function runRecipeOcr(photoUri: string): Promise<RecipeDraft> {
@@ -131,22 +135,13 @@ export async function runRecipeOcr(photoUri: string): Promise<RecipeDraft> {
   const apiKey = await getApiKey();
   if (!apiKey) throw new OcrError('NO_API_KEY');
 
-  let preparedUri: string;
-  try {
-    preparedUri = await prepareImageForOcr(photoUri);
-  } catch (e) {
-    console.warn('[OCR] resize failed:', e);
-    throw new OcrError('UNKNOWN', `resize: ${e instanceof Error ? e.message : String(e)}`);
-  }
-
   let base64: string;
   try {
-    base64 = await FileSystem.readAsStringAsync(preparedUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    base64 = await prepareImageForOcr(photoUri);
   } catch (e) {
-    console.warn('[OCR] read failed:', e);
-    throw new OcrError('UNKNOWN', `read: ${e instanceof Error ? e.message : String(e)}`);
+    if (e instanceof OcrError) throw e;
+    console.warn('[OCR] resize failed:', e);
+    throw new OcrError('UNKNOWN', `resize: ${e instanceof Error ? e.message : String(e)}`);
   }
   console.log(`[OCR] base64 length: ${base64.length} (~${Math.round(base64.length / 1024)}KB)`);
 
@@ -178,6 +173,9 @@ export async function runRecipeOcr(photoUri: string): Promise<RecipeDraft> {
         'x-api-key': apiKey,
         'anthropic-version': API_VERSION,
         'content-type': 'application/json',
+        // Requis pour appeler l'API depuis un navigateur (BYOK assumé) ; sans
+        // effet sur natif.
+        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify(body),
     });

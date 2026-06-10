@@ -27,6 +27,9 @@ import {
 import { searchLibrary, type LibraryEntry } from '../db/ingredientLibrary';
 import { COURSES, type Course } from '../db/types';
 import { OcrError, runRecipeOcr, type RecipeDraft } from '../ocr/claude';
+import { refreshRecipeFlavorInBackground } from '../flavor/service';
+import { FlavorPills } from '../components/FlavorPills';
+import type { FlavorProfile } from '../flavor/types';
 import type { RecipeFormProps } from '../navigation/types';
 
 type IngredientDraft = {
@@ -93,6 +96,7 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
   const [name, setName] = useState('');
   const [course, setCourse] = useState<Course>('entree');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [flavor, setFlavor] = useState<FlavorProfile | null>(null);
   const [ingredients, setIngredients] = useState<IngredientDraft[]>([emptyIngredient()]);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
@@ -173,6 +177,7 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
       setName(r.name);
       setCourse(r.course);
       setPhotoUri(r.photoUri);
+      setFlavor(r.flavor);
       setIngredients(
         r.ingredients.length > 0
           ? r.ingredients.map((i) => ({
@@ -251,11 +256,14 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
     setSaving(true);
     try {
       const input = { name: name.trim(), course, photoUri, ingredients: cleaned };
+      let savedId: string;
       if (recipeId) {
         await updateRecipe(recipeId, input);
+        savedId = recipeId;
       } else {
-        await createRecipe(input);
+        savedId = await createRecipe(input);
       }
+      refreshRecipeFlavorInBackground(savedId);
       navigation.goBack();
     } catch (e) {
       Alert.alert(fr.common.error, e instanceof Error ? e.message : String(e));
@@ -352,6 +360,12 @@ export function RecipeForm({ navigation, route }: RecipeFormProps) {
             />
           ))}
         </View>
+
+        {flavor && (
+          <View style={styles.flavorRow}>
+            <FlavorPills profile={flavor} />
+          </View>
+        )}
 
         <View style={styles.ingredientHeader}>
           <Text style={styles.label}>{fr.recipeForm.ingredients}</Text>
@@ -496,6 +510,7 @@ const styles = StyleSheet.create({
   linkBtn: { alignSelf: 'flex-start', paddingVertical: 6 },
   linkBtnText: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   courseRow: { flexDirection: 'row', gap: 8 },
+  flavorRow: { marginTop: 10 },
   ingredientHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

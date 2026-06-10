@@ -3,13 +3,14 @@ import { View, Text, StyleSheet, ScrollView, Image, Pressable, Alert } from 'rea
 import { useFocusEffect } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MenuFlavorMix } from '../components/MenuFlavorMix';
 import { deleteMenu, getMenu, updateMenuCouverts } from '../db/menus';
 import { COURSES, type MenuWithCourses } from '../db/types';
 import { fr } from '../i18n/fr';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { formatEUR } from '../utils/money';
-import { exportMenuPdf } from '../export/menuPdf';
+import { exportMenuPdf, type PdfVariant } from '../export/menuPdf';
 import type { ComposeStackParamList, MenusStackParamList } from '../navigation/types';
 
 type Props = {
@@ -51,11 +52,20 @@ export function MenuDetail({ route, navigation }: Props) {
     }
   }
 
-  async function onExport() {
+  function onExport() {
     if (!menu || exporting) return;
+    Alert.alert(fr.export.chooseVariant, '', [
+      { text: fr.recipeForm.cancel, style: 'cancel' },
+      { text: fr.export.clientVariant, onPress: () => runExport('client') },
+      { text: fr.export.kitchenVariant, onPress: () => runExport('kitchen') },
+    ]);
+  }
+
+  async function runExport(variant: PdfVariant) {
+    if (!menu) return;
     setExporting(true);
     try {
-      await exportMenuPdf(menu);
+      await exportMenuPdf(menu, variant);
     } catch (e) {
       Alert.alert(fr.common.error, e instanceof Error ? e.message : String(e));
     } finally {
@@ -118,6 +128,14 @@ export function MenuDetail({ route, navigation }: Props) {
           </View>
         );
       })}
+
+      <MenuFlavorMix
+        profiles={{
+          entree: recipesByCourse.entree?.flavor,
+          plat: recipesByCourse.plat?.flavor,
+          dessert: recipesByCourse.dessert?.flavor,
+        }}
+      />
 
       <View style={styles.couvertsRow}>
         <Text style={styles.couvertsLabel}>{fr.menuSummary.couverts}</Text>

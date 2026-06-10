@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Pressable, Alert, Image } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useComposeStore } from '../state/composeStore';
+import { MenuFlavorMix } from '../components/MenuFlavorMix';
 import { getRecipe } from '../db/recipes';
 import { createMenu } from '../db/menus';
 import { COURSES, type Course, type RecipeWithIngredients } from '../db/types';
@@ -107,6 +108,14 @@ export function MenuSummary({ navigation }: MenuSummaryProps) {
             </View>
           );
         })}
+
+        <MenuFlavorMix
+          profiles={{
+            entree: recipes.entree?.flavor,
+            plat: recipes.plat?.flavor,
+            dessert: recipes.dessert?.flavor,
+          }}
+        />
 
         <View style={styles.couvertsRow}>
           <Text style={styles.couvertsLabel}>{fr.menuSummary.couverts}</Text>

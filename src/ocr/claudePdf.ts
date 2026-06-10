@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { getApiKey } from '../utils/apiKey';
 import { OcrError, type RecipeDraft } from './claude';
@@ -96,19 +97,44 @@ function normalizeDrafts(input: unknown): RecipeDraft[] {
     .filter((d) => d.name !== '' || d.ingredients.length > 0);
 }
 
+// Web : pas d'expo-file-system ; l'URI du DocumentPicker (blob:) se lit via
+// fetch + FileReader.
+async function readPdfWeb(pdfUri: string): Promise<{ base64: string; size: number }> {
+  const blob = await (await fetch(pdfUri)).blob();
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+    reader.readAsDataURL(blob);
+  });
+  return { base64: dataUrl.slice(dataUrl.indexOf(',') + 1), size: blob.size };
+}
+
+async function readPdfNative(pdfUri: string): Promise<{ base64: string; size: number }> {
+  const info = await FileSystem.getInfoAsync(pdfUri);
+  if (!info.exists) throw new OcrError('UNKNOWN', 'PDF not found');
+  const size = 'size' in info ? info.size : 0;
+  const base64 = await FileSystem.readAsStringAsync(pdfUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return { base64, size };
+}
+
 export async function runBatchRecipeOcr(pdfUri: string): Promise<RecipeDraft[]> {
   console.log('[PDF-OCR] start', pdfUri);
   const apiKey = await getApiKey();
   if (!apiKey) throw new OcrError('NO_API_KEY');
 
-  let info: Awaited<ReturnType<typeof FileSystem.getInfoAsync>>;
+  let base64: string;
+  let size: number;
   try {
-    info = await FileSystem.getInfoAsync(pdfUri);
+    ({ base64, size } = await (Platform.OS === 'web'
+      ? readPdfWeb(pdfUri)
+      : readPdfNative(pdfUri)));
   } catch (e) {
-    throw new OcrError('UNKNOWN', `stat: ${e instanceof Error ? e.message : String(e)}`);
+    if (e instanceof OcrError) throw e;
+    throw new OcrError('UNKNOWN', `read: ${e instanceof Error ? e.message : String(e)}`);
   }
-  if (!info.exists) throw new OcrError('UNKNOWN', 'PDF not found');
-  const size = 'size' in info ? info.size : 0;
   if (size > SOFT_MAX_BYTES) {
     throw new OcrError(
       'UNKNOWN',
@@ -116,15 +142,6 @@ export async function runBatchRecipeOcr(pdfUri: string): Promise<RecipeDraft[]> 
     );
   }
   console.log(`[PDF-OCR] size: ${Math.round(size / 1024)}KB`);
-
-  let base64: string;
-  try {
-    base64 = await FileSystem.readAsStringAsync(pdfUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-  } catch (e) {
-    throw new OcrError('UNKNOWN', `read: ${e instanceof Error ? e.message : String(e)}`);
-  }
 
   const body = {
     model: MODEL,
@@ -154,6 +171,7 @@ export async function runBatchRecipeOcr(pdfUri: string): Promise<RecipeDraft[]> 
         'x-api-key': apiKey,
         'anthropic-version': API_VERSION,
         'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify(body),
     });

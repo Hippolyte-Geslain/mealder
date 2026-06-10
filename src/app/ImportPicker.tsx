@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { fr } from '../i18n/fr';
@@ -36,7 +36,11 @@ export function ImportPicker({ navigation }: ImportPickerProps) {
     if (result.canceled) return;
     const asset = result.assets[0];
     try {
-      const text = await FileSystem.readAsStringAsync(asset.uri);
+      // Web : URI blob: lisible via fetch ; expo-file-system n'existe pas.
+      const text =
+        Platform.OS === 'web'
+          ? await (await fetch(asset.uri)).text()
+          : await FileSystem.readAsStringAsync(asset.uri);
       const drafts = parseRecipesCsv(text);
       if (drafts.length === 0) {
         Alert.alert(fr.common.error, fr.import.emptyReview);

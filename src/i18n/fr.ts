@@ -74,6 +74,12 @@ export const fr = {
     delete: 'Supprimer le menu',
     confirmDelete: 'Supprimer ce menu ?',
   },
+  export: {
+    chooseVariant: 'Quelle version exporter ?',
+    clientVariant: 'Version client (sans coûts)',
+    kitchenVariant: 'Version cuisine (coûts + saveurs)',
+    kitchenFooter: 'Document interne — coûts matière',
+  },
   savedMenus: {
     title: 'Mes menus',
     empty: 'Aucun menu sauvegardé.',
@@ -104,6 +110,35 @@ export const fr = {
     failed: "L'analyse a échoué. Réessayez ou remplissez la recette manuellement.",
     replaceWarn: 'Remplacer le contenu actuel du formulaire ?',
     replace: 'Remplacer',
+  },
+  costHistory: {
+    title: 'Coûts des ingrédients',
+    open: 'Historique des coûts des ingrédients',
+    openSection: 'Coûts',
+    empty: 'Aucun ingrédient dans la bibliothèque.',
+    changes: (n: number) => `${n} changement${n > 1 ? 's' : ''}`,
+    noHistory: 'Aucun changement enregistré pour le moment.',
+    help: "Chaque changement de coût d'un ingrédient est enregistré automatiquement lors de la sauvegarde d'une recette.",
+  },
+  flavor: {
+    axes: {
+      sucre: 'Sucré',
+      sale: 'Salé',
+      umami: 'Umami',
+      gras: 'Gras',
+      piquant: 'Piquant',
+      acide: 'Acide',
+    },
+    menuMixTitle: 'Saveurs du menu',
+    backfillSection: 'Profils de saveurs',
+    backfillHelp:
+      "Chaque recette reçoit automatiquement un profil de saveurs calculé via Claude (quelques centimes par recette, calculé une seule fois). Les recettes existantes peuvent être traitées ici.",
+    backfillBtn: 'Calculer les profils manquants',
+    backfillProgress: (done: number, total: number) => `Calcul ${done} / ${total}…`,
+    backfillDone: (n: number) => `${n} profil${n > 1 ? 's' : ''} calculé${n > 1 ? 's' : ''}.`,
+    backfillNothing: 'Tous les profils sont déjà calculés.',
+    backfillPartial: (ok: number, ko: number) =>
+      `${ok} profil${ok > 1 ? 's' : ''} calculé${ok > 1 ? 's' : ''}, ${ko} échec${ko > 1 ? 's' : ''}.`,
   },
   import: {
     title: 'Importer',

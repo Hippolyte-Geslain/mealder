@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.hippogagne.mealder",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7F1E3"
@@ -32,10 +33,17 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "MealMatch a besoin d'accéder à vos photos pour illustrer vos recettes."
+          "photosPermission": "MealMatch a besoin d'accéder à vos photos pour illustrer vos recettes.",
+          "microphonePermission": false
         }
       ],
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "61d6e2a7-57b3-4c23-aefd-ebba9c69cd04"
+      }
+    },
+    "owner": "hippogagne"
   }
 }

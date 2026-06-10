@@ -3,6 +3,7 @@ import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { fr } from '../i18n/fr';
 import { formatEUR } from '../utils/money';
+import { FlavorPills } from './FlavorPills';
 import type { RecipeWithIngredients } from '../db/types';
 
 export function RecipeCard({ recipe }: { recipe: RecipeWithIngredients }) {
@@ -22,6 +23,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeWithIngredients }) {
           {recipe.name}
         </Text>
         <Text style={styles.course}>{fr.course[recipe.course]}</Text>
+        <FlavorPills profile={recipe.flavor} />
         <View style={styles.ingredients}>
           {recipe.ingredients.map((ing) => (
             <View key={ing.id} style={styles.ingRow}>

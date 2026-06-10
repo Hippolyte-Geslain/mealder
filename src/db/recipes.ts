@@ -2,6 +2,7 @@ import { getDb } from './client';
 import { ensureDeviceOwnerId } from './owner';
 import { upsertFromRecipe } from './ingredientLibrary';
 import { uuid } from '../utils/uuid';
+import { parseFlavorProfile, serializeFlavorProfile, type FlavorProfile } from '../flavor/types';
 import type { Course, Ingredient, Recipe, RecipeWithIngredients } from './types';
 
 type RecipeRow = {
@@ -10,6 +11,8 @@ type RecipeRow = {
   name: string;
   course: Course;
   photo_uri: string | null;
+  flavor_json: string | null;
+  flavor_input: string | null;
   created_at: number;
   updated_at: number;
 };
@@ -31,6 +34,8 @@ function toRecipe(r: RecipeRow): Recipe {
     name: r.name,
     course: r.course,
     photoUri: r.photo_uri,
+    flavor: parseFlavorProfile(r.flavor_json),
+    flavorInput: r.flavor_input,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -212,6 +217,22 @@ export async function createRecipesBulk(inputs: RecipeInput[]): Promise<string[]
     }
   });
   return ids;
+}
+
+// updated_at volontairement non modifié : le calcul de profil est une opération
+// d'arrière-plan qui ne doit pas réordonner les listes triées par modification.
+export async function setRecipeFlavor(
+  id: string,
+  profile: FlavorProfile,
+  inputKey: string
+): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    'UPDATE recipe SET flavor_json = ?, flavor_input = ? WHERE id = ?',
+    serializeFlavorProfile(profile),
+    inputKey,
+    id
+  );
 }
 
 export class RecipeInUseError extends Error {
